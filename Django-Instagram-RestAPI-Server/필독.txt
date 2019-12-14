@@ -1,0 +1,186 @@
+﻿1. 쿠키커터 설치
+$ pip install "cookiecutter>=1.4.0"
+
+2. 쿠키커터 다운(git bash에서)
+$ cookiecutter https://github.com/pydanny/cookiecutter-django
+
+3. pipenv --three (가상환경 설치)
+
+4. pipenv shell (가상환경 접속)
+
+5. requirements 설치
+$ pipenv install -r requirements/local.txt
+
+6. django-admin 설치
+& pipenv install django
+
+7. mysql 설치
+$ pipenv install pymysql
+
+8. DB생성
+$ create database nomadgram2
+$ use nomadgram2
+
+9. base.py 수정
+import pymysql
+
+pymysql.install_as_MySQLdb()
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'nomadgram2', # DB명
+        'USER': 'root', # 데이터베이스 계정
+        'PASSWORD': 'bitc5600', # 계정 비밀번호
+        'HOST': 'localhost', # 데이테베이스 주소(IP)
+        'PORT': '3306', # 데이터베이스 포트(보통은 3306)
+    }
+}
+
+CSRF_COOKIE_HTTPONLY = False
+
+10. 마이그레이션
+python manage.py makemigrations
+python manage.py migrate
+
+11. 앱 생성 
+python manage.py createsuperuser
+
+12. 수퍼유저 생성
+django-admin startapp images
+
+13. 서버 실행 후 수퍼유저로 접속
+python manage.py runserver
+
+14. git push 하고 세팅 종료
+
+-------------------------------
+(1) pipenv install django-taggit
+https://django-taggit.readthedocs.io/en/latest/getting_started.html
+
+(2) pipenv install django-taggit-serializer
+https://github.com/glemmaPaul/django-taggit-serializer
+
+(3) 
+pipenv install djangorestframework
+pipenv install markdown
+pipenv install django-filter 
+https://www.django-rest-framework.org/	
+-> base.py 세팅할 때 permission 추가하지 말자.!!
+
+(4) 앱 만들기 notifications (주의:nomadgram2폴더안으로 들어가서 만들기)
+django-admin startapp notifications
+마이그레이션 하기
+base.py에 app빌드하기
+urls, serializers, model, admin 세팅하기
+
+(5) JWT 설치 및 세팅
+http://getblimp.github.io/django-rest-framework-jwt/
+pipenv install djangorestframework-jwt
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+
+* 테스트 방법
+http://localhost:8000/api-token-auth/
+username과 pasword를 넣고 토큰을 받는다.
+
+토큰을 받으면 Headers에 key와 value를 넣는다.
+주의 : JWT뒤에 한칸 스페이스를 넣어준다.
+프로그램 : postman을 사용하자.(크롬확장프로그램)
+key : Authorization
+value : JWT 토큰  
+
+http://localhost:8000/images/ 를 로그인 없이 요청하면
+{
+    "detail": "Authentication credentials were not provided."
+}
+이렇게 뜬다.
+대신 토큰을 헤더에 넣고 요청하면 정상적으로 출력 된다.
+
+(6) 로그인, 로그아웃을 위한 django-rest-auth 설치하기
+https://django-rest-auth.readthedocs.io/en/latest/installation.html
+pipenv install django-rest-auth
+
+### base.py 
+맨 아래
+REST_USE_JWT = True
+
+서드 파티
+'rest_framework.authtoken',
+'rest_auth',
+'rest_auth.registration',
+
+### urls.py
+path(
+    "rest-auth/", include('rest_auth.urls') #로그인, 로그아웃을 위해
+),
+path(
+    "rest-auth/registration/", include('rest_auth.registration.urls') #회원가입을 위해
+),
+
+### endpoint 확인해보자.
+/rest-auth/login/
+로그인을 할 것인데 username, email, password가 필요하단다.
+email은 필수조건이 아니라고 base.py에서 설정을 아래처럼 변경해주자.
+ACCOUNT_EMAIL_REQUIRED = False
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
+로그인을 하게 되면 토큰을 주는데, 이제 이 토큰으로 로그인을 할 것이다.
+그런데 로그인이 계속 유지되어있다.
+
+그 이유는 base.py에서 rest_framework설정때문에 세션과 쿠키에 
+내 세션ID가 저장되어있기 때문이다.
+그래서 기본 인증 정책을 좀 변경해야겠다. 두개를 지워주자.
+
+주의 : localhost:8000/admin/은 세션기반이니까 그대로지만
+아래 두개를 지우면 localhost:8000/images/에 접속시 인증제한이 됨.
+
+'rest_framework.authentication.SessionAuthentication',
+'rest_framework.authentication.BasicAuthentication',
+
+로그아웃을 위해 base.py
+/rest-auth/logout/
+ACCOUNT_LOGOUT_ON_GET = True 설정해주자.
+
+주의: 로그아웃은 위 2개 SessionAuthentication과 BasicAuthentication을
+지우지 않았을 때 필요하다. 왜냐하면 토큰 기반이고 세션기반이 아니기 때문에 로그인이 유지되지
+않기 때문이다.
+
+하지만!! 중요!!
+로그아웃을 하게 되면 서버쪽에서 토큰 정보를 지워버리게 되니까...
+토큰으로도 접근이 불가능해지게 된다.
+
+정리하면 logout은 서버쪽 토큰을 삭제하는 것이다.
+세션과 쿠키기반이면 토큰을 삭제하면서 세션정보와 쿠키정보까지 삭제한다.
+하지만 토큰기반이면 서버쪽 토큰만 삭제된다.
+서버쪽 토큰이 삭제되면 당연히 토큰이 유효하지 않게 되어서 더이상접근이 불가능하다.
+
+회원가입 base.py에서 LOGIN_REDIRECT_URL = 'users:redirect' 삭제하자.
+/rest-auth/registration/ 
+username
+password1
+password2
+email
+
+회원가입 및 이메일인증
+/rest-auth/registration/verify-email/
+
+패스워드변경
+/rest-auth/password/change/
+
+패스워드리셋 (이메일인증 필요)
+/rest-auth/password/reset/ 
+
+
+(7) 페이스북 로그인
+
+

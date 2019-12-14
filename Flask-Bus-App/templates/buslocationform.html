@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Bootstrap Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?clientId=18aKqdjFkh9TnhDLY_Qp"></script>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-md bg-dark navbar-dark">
+        <a class="navbar-brand" href="/">HOME</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/lineform">버스도착정보</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/buslocationform">버스실시간위치</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <br>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-5">
+                <form class="form-inline" role="form" action="/get_buslocation" method="POST">
+                    <label for="buslinenum" class="mb-2 mr-sm-2">버스번호:</label>
+                    <input type="text" name="buslinenum" class="form-control mb-2 mr-sm-2" />
+                    <button type="submit" class="btn btn-primary mb-2">Submit</button>
+                </form>
+                <br>
+                {% if list != null %}
+                <h6>버스정보</h6>
+                {% for item in list %}
+                <ul class="list-group">
+                    
+                    <li class="list-group-item">
+                        {{item['bstopnm']}}
+                        {% if item['lat'] != null %}
+                        <img src='{{ url_for("static", filename="images/marker.png") }}' width="10" height="10"/>
+                        {% endif %}
+                    </li>
+                </ul>
+                {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="col-md-7">
+                <h6>버스의 실시간 위치입니다.</h6>
+                <div id="map" style="width:100%;height:400px;padding:0;margin:0;"></div>
+                <script>
+                    {% if list != null %}
+                    {% for item in list %}
+                        {% if item['lat'] != null %}
+                        var map = new naver.maps.Map('map', {
+                            center: new naver.maps.LatLng("{{item['lat']}}", "{{item['lon']}}"),
+                            zoom: 6
+                        });
+                        {% endif %}
+                    {% endfor %}
+                    {% else %}
+                        var map = new naver.maps.Map('map', {
+                            center: new naver.maps.LatLng(35.145615, 129.1130831),
+                            zoom: 6
+                        });
+                    {% endif %}
+
+                    {% for item in list %}
+                    {% if item['lat'] != null %}
+                    var marker = new naver.maps.Marker({
+                        position: new naver.maps.LatLng("{{item['lat']}}", "{{item['lon']}}"),
+                        map: map,
+                        icon: {
+                            url: '{{ url_for("static", filename="images/marker.png") }}',
+                            size: new naver.maps.Size(50, 68),
+                            scaledSize: new naver.maps.Size(25, 34),
+                            origin: new naver.maps.Point(0, 0),
+                            anchor: new naver.maps.Point(12, 34)
+                        }
+                    });
+
+                    marker.setMap(map);
+                    {% endif %}
+                    {% endfor %}
+
+                </script>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

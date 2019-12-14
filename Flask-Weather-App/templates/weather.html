@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <h5>하늘 0~2 맑음 3~5 구름조금 6~8 구름많음 9~ 흐림</h5>
+    {% for item in r_item %}
+        {% if item['category'] == 'SKY' %}
+            하늘 : {{item['fcstValue']}}<br>
+        {% elif item['category'] == 'REH' %}
+            습도 : {{item['fcstValue']}}<br>
+        {% elif item['category'] == 'T3H' %}
+            온도 : {{item['fcstValue']}}<br>
+        {% endif %}
+    {% endfor %}
+</body>
+</html>

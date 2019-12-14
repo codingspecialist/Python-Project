@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bus Api</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?clientId=18aKqdjFkh9TnhDLY_Qp"></script>
+    <style type="text/css">
+        html, body { width:100%;height:100%;padding:0;margin:0; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-md bg-dark navbar-dark">
+  <a class="navbar-brand" href="/">HOME</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="collapsibleNavbar">
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="/lineform">버스도착정보</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/buslocationform">버스실시간위치</a>
+      </li>    
+    </ul>
+  </div>  
+</nav>
+<br>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-5">
+    <form class="form-inline" role="form" action="/get_bstopId" method="POST">
+      <label for="bstopnm" class="mb-2 mr-sm-2">정류장이름:</label>
+      <input type="text" name="bstopnm" class="form-control mb-2 mr-sm-2" />
+      <button type="submit" class="btn btn-primary mb-2">Submit</button>
+    </form>
+    <br>
+    <ul class="list-group">
+      {% if list != null: %}
+      <h6>정류소 정보</h6>
+      {% for item in list: %}
+      {% if item['stoptype'] != '마을': %}
+        <a href="/get_stoplist/{{item['bstopId']}}"><li class="list-group-item">번호:{{loop.index}} {{item['bstopNm']}}</li></a>
+      {% endif %}
+      {% endfor %}
+      {% endif %}
+    </ul>
+    </div>
+
+    <div class="col-md-7">
+      <h6>마커를 클릭하면 해당 정류장의 위치를 알 수 있습니다.</h6>
+      <div id="map" style="width:100%;height:400px;padding:0;margin:0;"></div>
+      <script>
+   
+        {% if list != null %}
+        var map = new naver.maps.Map('map', {
+            center: new naver.maps.LatLng("{{list[0]['gpsY']}}", "{{list[0]['gpsX']}}"),
+            zoom: 11
+        });
+        {% else %}
+        var map = new naver.maps.Map('map', {
+            center: new naver.maps.LatLng(35.145615, 129.1130831),
+            zoom: 11
+        });  
+        {% endif %}
+        
+        var markers = [];
+        var infoWindows = [];
+        
+        {% for item in list %}
+        {% if item['stoptype'] != '마을' %}
+        var marker = new naver.maps.Marker({
+            position: new naver.maps.LatLng("{{item['gpsY']}}", "{{item['gpsX']}}"),
+            map: map,
+            icon: {
+              url: '{{ url_for("static", filename="images/marker.png") }}',
+              size: new naver.maps.Size(50, 68),
+              scaledSize: new naver.maps.Size(25, 34),
+              origin: new naver.maps.Point(0, 0),
+              anchor: new naver.maps.Point(12, 34)
+          }
+        });
+        var infoWindow = new naver.maps.InfoWindow({
+          content: '번호:{{loop.index}}'
+        });
+        markers.push(marker);
+        infoWindows.push(infoWindow);
+        {% endif %}
+
+        marker.setMap(map);
+        {% endfor %}
+        
+        function getClickHandler(seq) {
+          return function(e) {
+              var marker = markers[seq],
+                  infoWindow = infoWindows[seq];
+      
+              if (infoWindow.getMap()) {
+                  infoWindow.close();
+              } else {
+                  infoWindow.open(map, marker);
+              }
+          }
+        }
+      
+        for (var i=0, ii=markers.length; i<ii; i++) {
+          naver.maps.Event.addListener(markers[i], 'click', getClickHandler(i));
+        }
+      
+      </script>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>
+
+

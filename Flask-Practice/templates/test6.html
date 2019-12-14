@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    {{json_data}}<br>
+    <script>
+        data1 = '{{json_data}}';
+        data2 = {{json_data|tojson}};
+        console.log(typeof(data1));
+        console.log(data1);
+        console.log(typeof(data2));
+        console.log(data2);
+
+        obj = JSON.parse(data2);
+        console.log(typeof(obj));
+        console.log(obj);
+        console.log(obj.name);
+        console.log(obj.phone);
+    </script>
+</body>
+</html>
